@@ -1,17 +1,1259 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Document</title>
-    <script src="https://aframe.io/releases/1.8.0/aframe.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>3D UFOキャッチャー</title>
+
+  <script src="https://aframe.io/releases/1.8.0/aframe.min.js"></script>
 </head>
 
 <body>
-    <a-scene>
-        <a-box position="0 0 -3" color="skyblue">
-        </a-box>
-    </a-scene>
-</body>
 
+<style>
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+  }
+
+  #ui {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10;
+
+    color: white;
+    background: rgba(0,0,0,0.75);
+
+    padding: 15px 20px;
+    border-radius: 12px;
+
+    min-width: 200px;
+  }
+
+  #ui h2 {
+    margin: 0 0 8px;
+  }
+
+  #score {
+    font-size: 28px;
+    font-weight: bold;
+  }
+
+  #message {
+    margin-top: 8px;
+    color: #ffff66;
+  }
+
+  #controls {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+
+    transform: translateX(-50%);
+
+    z-index: 10;
+
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  button {
+    border: none;
+    border-radius: 10px;
+
+    padding: 13px 18px;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #dddddd;
+  }
+</style>
+
+
+<!-- =========================
+     UI
+========================= -->
+
+<div id="ui">
+
+  <h2>🎮 UFOキャッチャー</h2>
+
+  <div>
+    SCORE：
+    <span id="score">0</span>
+  </div>
+
+  <div>
+    ← →：移動
+  </div>
+
+  <div>
+    ↓：下降
+  </div>
+
+  <div>
+    ↑：上昇
+  </div>
+
+  <div>
+    SPACE：アーム開閉
+  </div>
+
+  <div id="message">
+    景品を狙ってください！
+  </div>
+
+</div>
+
+
+<!-- =========================
+     ボタン
+========================= -->
+
+<div id="controls">
+
+  <button id="leftButton">
+    ← 左
+  </button>
+
+  <button id="rightButton">
+    右 →
+  </button>
+
+  <button id="downButton">
+    ↓ 下降
+  </button>
+
+  <button id="upButton">
+    ↑ 上昇
+  </button>
+
+  <button id="clawButton">
+    🖐 アーム開閉
+  </button>
+
+  <button id="resetButton">
+    🔄 リセット
+  </button>
+
+</div>
+
+
+<!-- =========================
+     A-FRAME
+========================= -->
+
+<a-scene
+  background="color: #111122"
+  physics-manager
+>
+
+
+  <!-- カメラ -->
+
+  <a-entity
+    camera
+    position="0 3.5 7"
+    rotation="-10 0 0">
+  </a-entity>
+
+
+  <!-- 照明 -->
+
+  <a-light
+    type="ambient"
+    intensity="1.2"
+    color="#ffffff">
+  </a-light>
+
+  <a-light
+    type="directional"
+    intensity="1.5"
+    position="2 6 4">
+  </a-light>
+
+
+  <!-- =========================
+       UFOキャッチャー本体
+  ========================= -->
+
+  <!-- 床 -->
+
+  <a-box
+    position="0 0 0"
+    width="5"
+    height="0.3"
+    depth="3.5"
+    color="#222233">
+  </a-box>
+
+
+  <!-- 左柱 -->
+
+  <a-box
+    position="-2.5 2.7 0"
+    width="0.25"
+    height="5.4"
+    depth="3.5"
+    color="#555577">
+  </a-box>
+
+
+  <!-- 右柱 -->
+
+  <a-box
+    position="2.5 2.7 0"
+    width="0.25"
+    height="5.4"
+    depth="3.5"
+    color="#555577">
+  </a-box>
+
+
+  <!-- 上 -->
+
+  <a-box
+    position="0 5.3 0"
+    width="5"
+    height="0.3"
+    depth="3.5"
+    color="#444466">
+  </a-box>
+
+
+  <!-- 背面 -->
+
+  <a-box
+    position="0 2.7 -1.7"
+    width="5"
+    height="5.4"
+    depth="0.2"
+    color="#333344"
+    opacity="0.7"
+    material="transparent:true">
+  </a-box>
+
+
+  <!-- 取り出し口 -->
+
+  <a-box
+    position="0 0.55 1.72"
+    width="1.6"
+    height="0.8"
+    depth="0.25"
+    color="#111111">
+  </a-box>
+
+
+  <a-text
+    value="PRIZE"
+    position="0 0.65 1.58"
+    align="center"
+    width="4"
+    color="#ffff00">
+  </a-text>
+
+
+  <!-- =========================
+       景品
+  ========================= -->
+
+  <a-sphere
+    id="prize1"
+    class="prize"
+    position="-1.2 1.2 0"
+    radius="0.35"
+    color="#ff5555">
+  </a-sphere>
+
+
+  <a-box
+    id="prize2"
+    class="prize"
+    position="0 1.2 0"
+    width="0.65"
+    height="0.65"
+    depth="0.65"
+    color="#55aaff">
+  </a-box>
+
+
+  <a-sphere
+    id="prize3"
+    class="prize"
+    position="1.2 1.2 0"
+    radius="0.35"
+    color="#55dd88">
+  </a-sphere>
+
+
+  <a-box
+    id="prize4"
+    class="prize"
+    position="0.8 1.9 -0.5"
+    width="0.55"
+    height="0.55"
+    depth="0.55"
+    color="#ffcc44">
+  </a-box>
+
+
+  <!-- =========================
+       クレーン
+  ========================= -->
+
+  <a-entity
+    id="claw"
+    position="0 4.5 0">
+
+
+    <!-- ワイヤー -->
+
+    <a-cylinder
+      id="wire"
+      position="0 -0.6 0"
+      radius="0.06"
+      height="1.2"
+      color="#bbbbbb">
+    </a-cylinder>
+
+
+    <!-- 本体 -->
+
+    <a-cylinder
+      position="0 -1.2 0"
+      radius="0.25"
+      height="0.15"
+      color="#dddddd">
+    </a-cylinder>
+
+
+    <!-- 左アーム -->
+
+    <a-box
+      id="armLeft"
+      position="-0.23 -1.42 0"
+      width="0.12"
+      height="0.5"
+      depth="0.12"
+      rotation="0 0 -25"
+      color="#cccccc">
+    </a-box>
+
+
+    <!-- 右アーム -->
+
+    <a-box
+      id="armRight"
+      position="0.23 -1.42 0"
+      width="0.12"
+      height="0.5"
+      depth="0.12"
+      rotation="0 0 25"
+      color="#cccccc">
+    </a-box>
+
+  </a-entity>
+
+
+</a-scene>
+
+
+<script type="module">
+
+/* ========================================
+   Cannon-es読み込み
+======================================== */
+
+import * as CANNON from
+"https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js";
+
+
+/* ========================================
+   変数
+======================================== */
+
+let world;
+
+let physicsBodies = [];
+
+let clawBody;
+
+let heldPrize = null;
+
+let clawX = 0;
+
+let clawY = 4.5;
+
+let score = 0;
+
+let clawOpen = true;
+
+let gameRunning = true;
+
+let lastTime = performance.now();
+
+
+/* ========================================
+   A-Frameコンポーネント
+======================================== */
+
+AFRAME.registerComponent("physics-manager", {
+
+  init: function () {
+
+    /* ==============================
+       物理世界
+    ============================== */
+
+    world = new CANNON.World();
+
+    world.gravity.set(0, -9.82, 0);
+
+
+    /* 摩擦 */
+
+    world.defaultContactMaterial.friction = 0.5;
+
+    world.defaultContactMaterial.restitution = 0.25;
+
+
+    /* ==============================
+       床
+    ============================== */
+
+    const floorShape =
+      new CANNON.Box(
+        new CANNON.Vec3(2.5, 0.15, 1.75)
+      );
+
+    const floorBody =
+      new CANNON.Body({
+        mass: 0
+      });
+
+    floorBody.addShape(floorShape);
+
+    floorBody.position.set(0, 0, 0);
+
+    world.addBody(floorBody);
+
+
+    /* ==============================
+       景品
+    ============================== */
+
+    createPrize(
+      document.getElementById("prize1"),
+      0.35
+    );
+
+    createPrize(
+      document.getElementById("prize2"),
+      0.35
+    );
+
+    createPrize(
+      document.getElementById("prize3"),
+      0.35
+    );
+
+    createPrize(
+      document.getElementById("prize4"),
+      0.3
+    );
+
+
+    /* ==============================
+       クレーン用物理ボディ
+    ============================== */
+
+    const clawShape =
+      new CANNON.Sphere(0.35);
+
+    clawBody =
+      new CANNON.Body({
+        mass: 0,
+        type: CANNON.Body.KINEMATIC
+      });
+
+    clawBody.addShape(clawShape);
+
+    clawBody.position.set(
+      clawX,
+      clawY - 1.2,
+      0
+    );
+
+    world.addBody(clawBody);
+
+
+    /* ==============================
+       物理更新
+    ============================== */
+
+    requestAnimationFrame(updatePhysics);
+
+  }
+
+});
+
+
+/* ========================================
+   景品を物理世界に追加
+======================================== */
+
+function createPrize(element, size) {
+
+  const shape =
+    new CANNON.Box(
+      new CANNON.Vec3(
+        size,
+        size,
+        size
+      )
+    );
+
+
+  const body =
+    new CANNON.Body({
+      mass: 0.8
+    });
+
+
+  body.addShape(shape);
+
+
+  const position =
+    element.object3D.position;
+
+
+  body.position.set(
+    position.x,
+    position.y,
+    position.z
+  );
+
+
+  body.angularDamping = 0.3;
+
+  body.linearDamping = 0.05;
+
+
+  body.element = element;
+
+
+  world.addBody(body);
+
+
+  physicsBodies.push(body);
+
+}
+
+
+/* ========================================
+   物理演算
+======================================== */
+
+function updatePhysics(time) {
+
+  const delta =
+    Math.min(
+      (time - lastTime) / 1000,
+      0.05
+    );
+
+  lastTime = time;
+
+
+  if (world) {
+
+    world.step(
+      1 / 60,
+      delta,
+      3
+    );
+
+
+    /* 景品をA-Frameへ反映 */
+
+    physicsBodies.forEach(body => {
+
+      if (!body.element) return;
+
+      body.element.object3D.position.set(
+        body.position.x,
+        body.position.y,
+        body.position.z
+      );
+
+
+      body.element.object3D.quaternion.set(
+        body.quaternion.x,
+        body.quaternion.y,
+        body.quaternion.z,
+        body.quaternion.w
+      );
+
+
+      /* =========================
+         落下口判定
+      ========================= */
+
+      checkPrizeHole(body);
+
+    });
+
+
+    /* クレーン */
+
+    if (clawBody) {
+
+      clawBody.position.set(
+        clawX,
+        clawY - 1.2,
+        0
+      );
+
+    }
+
+  }
+
+
+  requestAnimationFrame(updatePhysics);
+
+}
+
+
+/* ========================================
+   落下口判定
+======================================== */
+
+function checkPrizeHole(body) {
+
+  if (!body.element) return;
+
+
+  const x = body.position.x;
+
+  const y = body.position.y;
+
+  const z = body.position.z;
+
+
+  /* 落下口の範囲 */
+
+  const inHole =
+
+    Math.abs(x) < 0.8 &&
+    z > 1.25 &&
+    z < 2.0 &&
+    y < 1.0;
+
+
+  if (inHole) {
+
+    addScore(body);
+
+  }
+
+
+  /* 落ちすぎ防止 */
+
+  if (y < -2) {
+
+    resetPrize(body);
+
+  }
+
+}
+
+
+/* ========================================
+   スコア加算
+======================================== */
+
+function addScore(body) {
+
+  if (!body.element) return;
+
+
+  score += 100;
+
+
+  document.getElementById("score")
+    .textContent = score;
+
+
+  document.getElementById("message")
+    .textContent =
+    "🎉 景品ゲット！ +100点";
+
+
+  /* 景品を一度削除 */
+
+  body.element.setAttribute(
+    "visible",
+    "false"
+  );
+
+
+  body.collisionResponse = false;
+
+  body.mass = 0;
+
+  body.velocity.set(0, 0, 0);
+
+}
+
+
+/* ========================================
+   景品リセット
+======================================== */
+
+function resetPrize(body) {
+
+  body.position.set(
+    (Math.random() - 0.5) * 3,
+    2.5,
+    (Math.random() - 0.5) * 1.5
+  );
+
+
+  body.velocity.set(0, 0, 0);
+
+  body.angularVelocity.set(0, 0, 0);
+
+
+  body.element.setAttribute(
+    "visible",
+    "true"
+  );
+
+}
+
+
+/* ========================================
+   クレーン位置更新
+======================================== */
+
+function updateClaw() {
+
+  const claw =
+    document.getElementById("claw");
+
+
+  claw.setAttribute(
+    "position",
+    `${clawX} ${clawY} 0`
+  );
+
+
+  if (clawBody) {
+
+    clawBody.position.set(
+      clawX,
+      clawY - 1.2,
+      0
+    );
+
+  }
+
+}
+
+
+/* ========================================
+   左右移動
+======================================== */
+
+function moveLeft() {
+
+  if (!gameRunning) return;
+
+  clawX -= 0.25;
+
+  clawX =
+    Math.max(-2.0, clawX);
+
+  updateClaw();
+
+}
+
+
+function moveRight() {
+
+  if (!gameRunning) return;
+
+  clawX += 0.25;
+
+  clawX =
+    Math.min(2.0, clawX);
+
+  updateClaw();
+
+}
+
+
+/* ========================================
+   アーム下降
+======================================== */
+
+function moveDown() {
+
+  if (!gameRunning) return;
+
+  clawY -= 0.3;
+
+  clawY =
+    Math.max(2.0, clawY);
+
+  updateClaw();
+
+}
+
+
+/* ========================================
+   アーム上昇
+======================================== */
+
+function moveUp() {
+
+  if (!gameRunning) return;
+
+  clawY += 0.3;
+
+  clawY =
+    Math.min(4.5, clawY);
+
+  updateClaw();
+
+}
+
+
+/* ========================================
+   アーム開閉
+======================================== */
+
+function toggleClaw() {
+
+  const left =
+    document.getElementById("armLeft");
+
+  const right =
+    document.getElementById("armRight");
+
+
+  if (clawOpen) {
+
+    /* ==========================
+       閉じる
+    ========================== */
+
+    left.setAttribute(
+      "animation",
+      "property: rotation; to: 0 0 -5; dur: 300; easing: easeOutQuad"
+    );
+
+
+    right.setAttribute(
+      "animation",
+      "property: rotation; to: 0 0 5; dur: 300; easing: easeOutQuad"
+    );
+
+
+    clawOpen = false;
+
+
+    document.getElementById("message")
+      .textContent =
+      "🖐 アームを閉じています";
+
+
+    tryGrabPrize();
+
+  } else {
+
+    /* ==========================
+       開く
+    ========================== */
+
+    left.setAttribute(
+      "animation",
+      "property: rotation; to: 0 0 -25; dur: 300; easing: easeOutQuad"
+    );
+
+
+    right.setAttribute(
+      "animation",
+      "property: rotation; to: 0 0 25; dur: 300; easing: easeOutQuad"
+    );
+
+
+    clawOpen = true;
+
+
+    releasePrize();
+
+
+    document.getElementById("message")
+      .textContent =
+      "🖐 アームを開きました";
+
+  }
+
+}
+
+
+/* ========================================
+   景品を掴む
+======================================== */
+
+function tryGrabPrize() {
+
+  if (heldPrize) return;
+
+
+  let closest = null;
+
+  let closestDistance = 999;
+
+
+  physicsBodies.forEach(body => {
+
+    if (!body.element) return;
+
+    if (
+      body.element.getAttribute("visible")
+      === false
+    ) return;
+
+
+    const dx =
+      body.position.x - clawX;
+
+    const dy =
+      body.position.y -
+      (clawY - 1.2);
+
+    const dz =
+      body.position.z;
+
+
+    const distance =
+      Math.sqrt(
+        dx * dx +
+        dy * dy +
+        dz * dz
+      );
+
+
+    if (
+      distance < closestDistance
+      &&
+      distance < 0.75
+    ) {
+
+      closest = body;
+
+      closestDistance =
+        distance;
+
+    }
+
+  });
+
+
+  if (!closest) {
+
+    document.getElementById("message")
+      .textContent =
+      "❌ 景品を掴めませんでした";
+
+    return;
+
+  }
+
+
+  /* ==================================
+     物理エンジンのConstraint
+     でクレーンと景品を固定
+  ================================== */
+
+  const constraint =
+    new CANNON.LockConstraint(
+      clawBody,
+      closest
+    );
+
+
+  world.addConstraint(
+    constraint
+  );
+
+
+  closest.grabConstraint =
+    constraint;
+
+
+  heldPrize = closest;
+
+
+  document.getElementById("message")
+    .textContent =
+    "🎁 景品を掴みました！";
+
+}
+
+
+/* ========================================
+   景品を離す
+======================================== */
+
+function releasePrize() {
+
+  if (!heldPrize) return;
+
+
+  if (heldPrize.grabConstraint) {
+
+    world.removeConstraint(
+      heldPrize.grabConstraint
+    );
+
+    heldPrize.grabConstraint =
+      null;
+
+  }
+
+
+  heldPrize.velocity.set(
+    0,
+    -1,
+    0
+  );
+
+
+  heldPrize =
+    null;
+
+
+  document.getElementById("message")
+    .textContent =
+    "🎁 景品を落としました！";
+
+}
+
+
+/* ========================================
+   リセット
+======================================== */
+
+function resetGame() {
+
+  score = 0;
+
+  document.getElementById("score")
+    .textContent = score;
+
+
+  clawX = 0;
+
+  clawY = 4.5;
+
+  clawOpen = true;
+
+  heldPrize = null;
+
+
+  updateClaw();
+
+
+  document.getElementById("armLeft")
+    .setAttribute(
+      "rotation",
+      "0 0 -25"
+    );
+
+
+  document.getElementById("armRight")
+    .setAttribute(
+      "rotation",
+      "0 0 25"
+    );
+
+
+  physicsBodies.forEach(
+    (body, index) => {
+
+      const positions = [
+
+        [-1.2, 1.2, 0],
+
+        [0, 1.2, 0],
+
+        [1.2, 1.2, 0],
+
+        [0.8, 1.9, -0.5]
+
+      ];
+
+
+      const p =
+        positions[index];
+
+
+      body.position.set(
+        p[0],
+        p[1],
+        p[2]
+      );
+
+
+      body.velocity.set(
+        0,
+        0,
+        0
+      );
+
+
+      body.angularVelocity.set(
+        0,
+        0,
+        0
+      );
+
+
+      body.mass = 0.8;
+
+      body.updateMassProperties();
+
+
+      body.element.setAttribute(
+        "visible",
+        "true"
+      );
+
+    }
+  );
+
+
+  document.getElementById("message")
+    .textContent =
+    "🔄 ゲームをリセットしました";
+
+}
+
+
+/* ========================================
+   キーボード
+======================================== */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (event.key === "ArrowLeft") {
+
+      moveLeft();
+
+    }
+
+
+    if (event.key === "ArrowRight") {
+
+      moveRight();
+
+    }
+
+
+    if (event.key === "ArrowDown") {
+
+      moveDown();
+
+    }
+
+
+    if (event.key === "ArrowUp") {
+
+      moveUp();
+
+    }
+
+
+    if (event.code === "Space") {
+
+      event.preventDefault();
+
+      toggleClaw();
+
+    }
+
+  }
+);
+
+
+/* ========================================
+   ボタン
+======================================== */
+
+document.getElementById(
+  "leftButton"
+).addEventListener(
+  "click",
+  moveLeft
+);
+
+
+document.getElementById(
+  "rightButton"
+).addEventListener(
+  "click",
+  moveRight
+);
+
+
+document.getElementById(
+  "downButton"
+).addEventListener(
+  "click",
+  moveDown
+);
+
+
+document.getElementById(
+  "upButton"
+).addEventListener(
+  "click",
+  moveUp
+);
+
+
+document.getElementById(
+  "clawButton"
+).addEventListener(
+  "click",
+  toggleClaw
+);
+
+
+document.getElementById(
+  "resetButton"
+).addEventListener(
+  "click",
+  resetGame
+);
+
+</script>
+
+</body>
 </html>
